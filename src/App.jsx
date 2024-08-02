@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import Busqueda  from './Busqueda'
+import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import './App.css';
+import Busqueda from './Busqueda';
+import Registro from './Registro';
+import Admin from './Admin'; // Nuevo componente
 
 function App() {
   const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
   const [logueado, setLogueado] = useState(false);
+  const [esAdmin, setEsAdmin] = useState(false); // Nuevo estado
 
   function cambiarUsuario(evento) {
     setUsuario(evento.target.value);
@@ -18,54 +20,66 @@ function App() {
   }
 
   async function ingresar() {
-    const peticion = await fetch('http://localhost:3000/login?usuario=' + usuario + '&clave=' + clave,{credentials: 'include'})
+    const peticion = await fetch('http://localhost:3000/login?usuario=' + usuario + '&clave=' + clave, { credentials: 'include' });
     if (peticion.ok) {
-        setLogueado(true);
-      } else {
-        alert('Usuario o clave inválidas');
-      }
-    
+      const data = await peticion.json();
+      setLogueado(true);
+      setEsAdmin(data.esAdmin); // Guardar si es admin
+    } else {
+      alert('Usuario o clave inválidas');
+    }
   }
 
-  async function validar (){
-    const peticion = await fetch('http://localhost:3000/validar',{credentials: 'include'})
+  async function validar() {
+    const peticion = await fetch('http://localhost:3000/validar', { credentials: 'include' });
     if (peticion.ok) {
-        setLogueado(true);
-      } 
+      const data = await peticion.json();
+      setLogueado(true);
+      setEsAdmin(data.esAdmin); // Guardar si es admin
+    }
   }
-  useEffect(()=>{
-     validar()
-  },[])
 
+  useEffect(() => {
+    validar();
+  }, []);
 
   if (logueado) {
-    return <Busqueda />;
+    return esAdmin ? <Admin /> : <Busqueda />;
   }
 
   return (
-    <>
-      <h2>Inicio de sesión</h2>
-      <img src="imagenes/logobc.jpg" alt="Logo BuscaCole" className="logo" />
-      <input
-        placeholder="usuario"
-        type="text"
-        name="usuario"
-        id="usuario"
-        value={usuario}
-        onChange={cambiarUsuario}
-      />
-      <input
-        placeholder="clave"
-        type="password"
-        name="clave"
-        id="clave"
-        value={clave}
-        onChange={cambiarClave}
-      />
-      <button onClick={ingresar}>Ingresar</button>
-      <br />
-      <button>Registrar</button>
-    </>
+    <Router>
+      <Routes>
+        <Route path="/" element={
+          <>
+            <h2>Inicio de sesión</h2>
+            <img src="imagenes/logobc.jpg" alt="Logo BuscaCole" className="logo" />
+            <input
+              placeholder="usuario"
+              type="text"
+              name="usuario"
+              id="usuario"
+              value={usuario}
+              onChange={cambiarUsuario}
+            />
+            <input
+              placeholder="clave"
+              type="password"
+              name="clave"
+              id="clave"
+              value={clave}
+              onChange={cambiarClave}
+            />
+            <button onClick={ingresar}>Ingresar</button>
+            <br />
+            <Link to="/registro">
+              <button>Registrar</button>
+            </Link>
+          </>
+        } />
+        <Route path="/registro" element={<Registro />} />
+      </Routes>
+    </Router>
   );
 }
 
